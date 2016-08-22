@@ -1,0 +1,16 @@
+Please download the release to use this in an environment.
+
+The original idea was shown to me on SethBling's youtube channel.
+
+What this does:
+1.  Uses LuaJit and ffi (included in the releases)
+2.  Increases speed
+3.  Increases accuracy (internal neurons are pixel based and hitbox based)
+
+
+What needs to be done:
+1.  Allow restart / reloading of script. Currently freezes indefinitely
+2.  Fix slanted blocks having full 16x16 block in neuron map
+
+
+To use effectively, enable Hide Banner and use the rest of the default settings.
