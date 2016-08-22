@@ -68,7 +68,6 @@ function exports.getTile(dx, dy)
 end
 
 local allowStatus = {
-    false, 
     true,
     false,
     true,
