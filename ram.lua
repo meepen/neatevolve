@@ -68,9 +68,14 @@ function exports.getTile(dx, dy)
 end
 
 local allowStatus = {
-    true,
+    false,
     false,
     true,
+    false,
+    false,
+    false,
+    false,
+    true
 }
 
 function exports.getSprites()
