@@ -80,7 +80,7 @@ end
 local set = ""
 local val  = ""
 for x = 0, 6 do
-    set = set.."inputs[inx + 0x%xULL],"
+    set = set.."inputs[inx + 0x%x],"
     val = val.."1,"
     local set2 = ""
     local val2 = ""
@@ -149,7 +149,7 @@ function exports.getInputs()
                 local h = fy_max - fy_min
                 
                 if (h >= 0 and w >= 0) then
-                    PrecompiledTableAssignment[h * 16 + w](inputs, fx + 1, iny)
+                    PrecompiledTableAssignment[h * 16 + w](inputs, fx + 1, fy_min)
                 end
             end
             
