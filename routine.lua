@@ -165,10 +165,9 @@ function exports.getInputs()
             sprite.x2 - marioX,
             sprite.y2 - marioY
         
-        local ix, iy
         local ix = dx + BoxRadius * 16
         local iy = dy + BoxRadius * 16
-        local ix2, iy2
+        
         local ix2 = dx2 + BoxRadius * 16
         local iy2 = dy2 + BoxRadius * 16
         
@@ -183,7 +182,6 @@ function exports.getInputs()
             extended[i].x - marioX,
             extended[i].y - marioY
         
-        local ix, iy
         local ix = dx + BoxRadius * 16
         local iy = dy + BoxRadius * 16
         

@@ -11,6 +11,18 @@ local clipping = {
     ydisp = memory.readbyterange(0x1B5E4, 60, "CARTROM"),
     height = memory.readbyterange(0x1B620, 60, "CARTROM"),
 }
+for i = 0, 59 do
+    local tmp = clipping.xdisp[i]
+    if (tmp > 0x7f) then
+        tmp = tmp - 0x100
+    end
+    clipping.xdisp[i] = tmp
+    tmp = clipping.ydisp[i]
+    if (tmp > 0x7f) then
+        tmp = tmp - 0x100
+    end
+    clipping.ydisp[i] = tmp
+end
 local playerClipping = {
     height = memory.readbyterange(0x1b660, 4, "CARTROM"),
     ydisp = memory.readbyterange(0x1b65c, 4, "CARTROM"),
@@ -55,13 +67,20 @@ function exports.getTile(dx, dy)
     return tile[1], tile[2]
 end
 
+local allowStatus = {
+    false, 
+    true,
+    false,
+    true,
+}
+
 function exports.getSprites()
     
 	local sprites = {}
 	for slot=0,11 do
         
 		local status = memory.readbyte(0x14C8+slot)
-		if status ~= 0 then
+		if allowStatus[status] then
 			local spritex = memory.readbyte(0xE4+slot) + memory.readbyte(0x14E0+slot)*256
 			local spritey = memory.readbyte(0xD8+slot) + memory.readbyte(0x14D4+slot)*256
             local clip = bit.band(memory.readbyte(0x1662+slot), 0x3f)
