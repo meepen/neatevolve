@@ -139,7 +139,7 @@ function exports.getInputs()
             local inx, iny = 
                 halfx + dx,
                 halfy + dy 
-            local low, high = getTile(dx + marioX, dy + marioY)
+            local low, high, indextbl = getTile(dx + marioX, dy + marioY)
             if (low > 0) then
                 local fy_min, fy_max = 
                     max(0, iny), 
@@ -147,9 +147,9 @@ function exports.getInputs()
                 local fx = max(0, inx)  
                 local w = min(inx + 15, iy_mult - 1) - fx
                 local h = fy_max - fy_min
-                
+                indextbl = indextbl or PrecompiledTableAssignment
                 if (h >= 0 and w >= 0) then
-                    PrecompiledTableAssignment[h * 16 + w](inputs, fx + 1, fy_min)
+                    indextbl[h * 16 + w](inputs, fx + 1, fy_min)
                 end
             end
             
