@@ -186,17 +186,16 @@ function exports.getSprites()
 	for slot=0,SMW.constant.sprite_max -1 do
         
 		local status = memory.readbyte(SMW.WRAM.sprite_status+slot)
-		if status ~= 0 then
-			local spritex = memory.readbyte(SMW.WRAM.sprite_x_low+slot) + memory.readbyte(SMW.WRAM.sprite_x_high+slot)*256
-			local spritey = memory.readbyte(SMW.WRAM.sprite_y_low+slot) + memory.readbyte(SMW.WRAM.sprite_y_high+slot)*256
-            local boxid = bit.band(memory.readbyte(SMW.WRAM.sprite_2_tweaker+slot), 0x3f)
-            
+		-- States 08 and above are considered alive; sprites in other states are dead and should not be interacted with.
+		if status ~= 0 and status >= 8 then
+			local sprite_extra_info = SPRITES[memory.readbyte(SMW.WRAM.sprite_number + slot)]
 			-- Ignore unnecessary stuff (tweak this in enemies.lua)
 			-- FIXME: Doesn't work for large enemies (ex. Banzai Bill)
 			--        Do we need to read SMW.WRAM.sprite_memory_header to fix this?
-			local sprite_extra_info = SPRITES[boxid]
-			
 			if (sprite_extra_info.deadly) then
+				local spritex = memory.readbyte(SMW.WRAM.sprite_x_low+slot) + memory.readbyte(SMW.WRAM.sprite_x_high+slot)*256
+				local spritey = memory.readbyte(SMW.WRAM.sprite_y_low+slot) + memory.readbyte(SMW.WRAM.sprite_y_high+slot)*256
+				local boxid = bit.band(memory.readbyte(SMW.WRAM.sprite_2_tweaker+slot), 0x3f)
 				local clip = SMW.HITBOX_SPRITE[boxid]
 				
 				sprites[#sprites+1] = {
