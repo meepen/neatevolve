@@ -26,7 +26,7 @@ local x_size = 0
 local y_size = 0
 
 
-function isLevelVertical()
+function exports.isLevelVertical()
 	local levelsettings = memory.readbyte(SMW.WRAM.level_mode_settings)
 	return (levelsettings ~= 0) and (levelsettings == 0x3 or levelsettings == 0x4 or levelsettings == 0x7 or levelsettings == 0x8 or levelsettings == 0xa or levelsettings == 0xd)
 end	
@@ -34,21 +34,23 @@ end
 
 function levelSetup()
 	local screens = memory.readbyte(SMW.WRAM.screens_number)
-
+	
 	if isLevelVertical() then
-		x_size = 27
-		y_size = 16 * screens --vertical level
+		x_size = 32
+		y_size = 16 * screens -- vertical level
 	else
-		x_size = 16 * screens
-		y_size = 27
+		x_size = 16 * screens -- horizontal level
+		y_size = 32
 	end
 end
 
+
 local iy_mult = ((BoxRadius * 2) * 16)
 local precompiled_end = "\nend"
-
 local precompiled = "return function(inputs, inx, iny) inx = inx + iny * "..iy_mult.."\n"
 local inputSetters = {}
+
+
 local function buildFormatArgs(count, num, offset)
     local r = {}
     offset = offset or 0
@@ -57,6 +59,8 @@ local function buildFormatArgs(count, num, offset)
     end
     return unpack(r) 
 end
+
+
 local function buidValueFormatArgs(count, y, range, offset)
     local r = {}
     offset = offset or 0
