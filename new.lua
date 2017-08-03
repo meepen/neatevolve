@@ -12,10 +12,8 @@ typedef struct {
 } gene_t;
 ]]
 
-local gene_t = ffi.typeof "gene_t"
-
 exports.newGene = function()
-	local gene = gene_t()
+	local gene = ffi.new "gene_t"
 	gene.enabled = true
 	return gene
 end
