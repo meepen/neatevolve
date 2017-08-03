@@ -1,0 +1,7 @@
+SystemID SNES
+000095	b	u	0	WRAM	Screen number
+00007E	w	s	0	WRAM	Player screen X
+000080	w	s	0	WRAM	Player screen Y
+000094	w	s	0	WRAM	Player X
+000096	w	s	0	WRAM	Player Y
+
