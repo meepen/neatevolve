@@ -184,7 +184,7 @@ local SPRITES = {
   [0xB6] = { description = "Reflecting fireball", deadly = true },
   [0xB7] = { description = "Carrot Top Lift, upper right", deadly = false },
   [0xB8] = { description = "Carrot Top Lift, upper left", deadly = false },
-  [0xB9] = { description = "Info Box", deadly = false },
+  [0xB9] = { description = "Info Box", deadly = true },
   [0xBA] = { description = "Timed Lift", deadly = false },
   [0xBB] = { description = "Moving castle block", deadly = false },
   [0xBC] = { description = "Bowser statue", deadly = false },
