@@ -287,9 +287,8 @@ event.onexit(function()
     end
     f:close()
 end)]]
-local rightmost = 0
-local timeout
-local maxrightmost = gameinfo.getromname() == "Super Mario World (USA)" and 4816 or 3186
+local levelFitness = 0
+local timeout = TimeoutConstant
 while true do
 	local backgroundColor = 0xD0FFFFFF
 	if not forms.ischecked(hideBanner) then
@@ -304,23 +303,53 @@ while true do
 	end
 	
 	--if pool.currentFrame % 5 == 0 then
-    if (memory.readbyte(0xDDA) ~= 0xFF) then
+	
+	--[[
+		$7E:13D6
+			Amount of time to wait until the score-incrementing drumroll begins when you beat a level.
+			Any time you enter a level, this address is set to #$50. Once you beat the level and the
+			number of bonus stars you won and the score is displayed (or just the score if you didn't
+			cut the goal tape), this timer will decrement itself once per frame. Once it reaches a
+			negative value or zero, the drumroll will commence. 
+			Once the drumroll ends, this is set to #$30, and then set to zero upon going to the
+			overworld. It serves the same purpose after you beat a boss as well.
+		$7E:0DDA
+			Back-up of the music register. Gets its value from the level music table at $05:84DB.
+			Bit 7 of this address is set when the player has a star powerup or presses a P-switch;
+			when this is cleared again, the music ends.
+			This address is also set to #$FF when the level ends, either by beating it or by dying.
+			Bit 6 is similar but is used to not reupload all music. This is used when changing from
+			the Mario start screen to the level game mode.
+	]]--
+	
+	local drumroll = memory.readbyte(0x13D6)
+	local reachedGoal = (drumroll ~= 0x50) and (drumroll ~= 0)
+	
+    if (memory.readbyte(0xDDA) ~= 0xFF) and (not reachedGoal) then
 		routine.evaluateCurrent(pool)
 	end
 
 	local marioX, marioY = ram.getPosition()
-	if marioX > rightmost then
-		rightmost = marioX
-		timeout = TimeoutConstant
+	
+	if ram.isLevelVertical() then
+		if marioY > levelFitness then
+			levelFitness = marioY
+			timeout = TimeoutConstant
+		end
+	else
+		if marioX > levelFitness then
+			levelFitness = marioX
+			timeout = TimeoutConstant
+		end
 	end
 	
 	timeout = timeout - 1
 	
-	
 	local timeoutBonus = pool.currentFrame / 4
 	if timeout + timeoutBonus <= 0 then
-		local fitness = rightmost - pool.currentFrame / 2
-		if rightmost > maxrightmost then
+		local fitness = levelFitness - pool.currentFrame / 2		
+		if reachedGoal then
+			console.writeline("MarI/O reached the goal!")
 			fitness = fitness + 1000
 		end
 		if fitness == 0 then
@@ -341,8 +370,8 @@ while true do
 			construct.nextGenome(pool)
 		end
 		routine.initializeRun(pool)
+		levelFitness = 0
         timeout = TimeoutConstant
-        rightmost = 0
 	end
 
 	if not forms.ischecked(hideBanner) then
@@ -359,7 +388,7 @@ while true do
             end
         end
 		gui.drawText(0, 0, "Gen " .. pool.generation .. " species " .. pool.currentSpecies .. " genome " .. pool.currentGenome .. " (" .. math.floor(measured/total*100) .. "%)", 0xFF000000, 11)
-		gui.drawText(0, 12, "Fitness: " .. math.floor(rightmost - (pool.currentFrame) / 2 - (timeout + timeoutBonus)*2/3), 0xFF000000, 11)
+		gui.drawText(0, 12, "Fitness: " .. math.floor(levelFitness - (pool.currentFrame) / 2 - (timeout + timeoutBonus)*2/3), 0xFF000000, 11)
 		gui.drawText(100, 12, "Max Fitness: " .. math.floor(pool.maxFitness), 0xFF000000, 11)
 	end
 		
