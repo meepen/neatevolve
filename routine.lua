@@ -37,7 +37,7 @@ function exports.initializePool(pool)
 end
 
 function exports.initializeRun(pool)
-	savestate.load(Filename);
+	savestate.loadslot(1);
     performTileSetup();
 	-- rightmost = 0
 	pool.currentFrame = 0
@@ -80,7 +80,7 @@ end
 local set = ""
 local val  = ""
 for x = 0, 6 do
-    set = set.."inputs[inx + 0x%x],"
+    set = set.."inputs[inx + 0x%xULL],"
     val = val.."1,"
     local set2 = ""
     local val2 = ""
@@ -139,7 +139,7 @@ function exports.getInputs()
             local inx, iny = 
                 halfx + dx,
                 halfy + dy 
-            local low, high, indextbl = getTile(dx + marioX, dy + marioY)
+            local low, high = getTile(dx + marioX, dy + marioY)
             if (low > 0) then
                 local fy_min, fy_max = 
                     max(0, iny), 
@@ -147,9 +147,9 @@ function exports.getInputs()
                 local fx = max(0, inx)  
                 local w = min(inx + 15, iy_mult - 1) - fx
                 local h = fy_max - fy_min
-                indextbl = indextbl or PrecompiledTableAssignment
+                
                 if (h >= 0 and w >= 0) then
-                    indextbl[h * 16 + w](inputs, fx + 1, fy_min)
+                    PrecompiledTableAssignment[h * 16 + w](inputs, fx + 1, iny)
                 end
             end
             
@@ -165,9 +165,10 @@ function exports.getInputs()
             sprite.x2 - marioX,
             sprite.y2 - marioY
         
+        local ix, iy
         local ix = dx + BoxRadius * 16
         local iy = dy + BoxRadius * 16
-        
+        local ix2, iy2
         local ix2 = dx2 + BoxRadius * 16
         local iy2 = dy2 + BoxRadius * 16
         
@@ -182,6 +183,7 @@ function exports.getInputs()
             extended[i].x - marioX,
             extended[i].y - marioY
         
+        local ix, iy
         local ix = dx + BoxRadius * 16
         local iy = dy + BoxRadius * 16
         
