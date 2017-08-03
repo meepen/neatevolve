@@ -187,12 +187,21 @@ function exports.getSprites()
         
 		local status = memory.readbyte(SMW.WRAM.sprite_status+slot)
 		-- States 08 and above are considered alive; sprites in other states are dead and should not be interacted with.
-		if status ~= 0 and status >= 8 then
-			local sprite_extra_info = SPRITES[memory.readbyte(SMW.WRAM.sprite_number + slot)]
+		if status >= 8 then
+			local sprite_number = memory.readbyte(SMW.WRAM.sprite_number + slot)
+			local sprite_extra_info = SPRITES[sprite_number]
+			
 			-- Ignore unnecessary stuff (tweak this in enemies.lua)
+			
 			-- FIXME: Doesn't work for large enemies (ex. Banzai Bill)
 			--        Do we need to read SMW.WRAM.sprite_memory_header to fix this?
-			if (sprite_extra_info.deadly) then
+			
+			-- FIXME: Why are empty shells marked as deadly? This never gets executed.
+			-- if sprite_number == 0xDB then
+			--    console.writeline("Red shell")
+			-- end
+			
+			if sprite_extra_info.deadly then
 				local spritex = memory.readbyte(SMW.WRAM.sprite_x_low+slot) + memory.readbyte(SMW.WRAM.sprite_x_high+slot)*256
 				local spritey = memory.readbyte(SMW.WRAM.sprite_y_low+slot) + memory.readbyte(SMW.WRAM.sprite_y_high+slot)*256
 				local boxid = bit.band(memory.readbyte(SMW.WRAM.sprite_2_tweaker+slot), 0x3f)
