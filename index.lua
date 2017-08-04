@@ -324,9 +324,9 @@ while true do
 	
 	local drumroll = memory.readbyte(0x13D6)
 	local reachedGoal = (drumroll ~= 0x50) and (drumroll ~= 0)
-	local levelActive = (memory.readbyte(0xDDA) ~= 0xFF) and not reachedGoal
+	local marioAlive = (memory.readbyte(0xDDA) ~= 0xFF)
 	
-    if levelActive then
+    if marioAlive and not reachedGoal then
 		routine.evaluateCurrent(pool)
 			
 		local marioX, marioY = ram.getPosition()
@@ -345,15 +345,19 @@ while true do
 		
 		timeout = timeout - 1
 	end
-
+		
 	local timeoutBonus = pool.currentFrame / 4
-	if timeout + timeoutBonus <= 0 or reachedGoal then
+	if timeout + timeoutBonus <= 0 or reachedGoal or not marioAlive then
 		local fitness = levelFitness - pool.currentFrame / 2		
 		if reachedGoal then
-			console.writeline("MarI/O reached the goal!")
+			console.writeline("MarI/O reached the goal! Fitness: "..fitness..", bonus: 1000")
 			fitness = fitness + 1000
 		end
-		if fitness == 0 then
+		if not marioAlive then
+			console.writeline("MarI/O died! Fitness: "..fitness..", penalty: "..TimeoutConstant)
+			fitness = fitness - TimeoutConstant
+		end
+		if fitness <= 0 then
 			fitness = -1
 		end
 		genome.fitness = fitness
