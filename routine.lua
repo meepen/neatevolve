@@ -26,9 +26,9 @@ function exports.evaluateCurrent(pool)
 	
 	for b=1,#ButtonNames do
 		if (controller[ButtonNames[b]]) then
-			gui.pixelText(2, (8 * b) + 24, ButtonNames[b]:sub(4), 0xFFFFFFFF, 0x8080FF80)
+			gui.pixelText(2, (8 * b) + 26, ButtonNames[b]:sub(4), 0xFFFFFFFF, 0x8080FF80)
 		else
-			gui.pixelText(2, (8 * b) + 24, ButtonNames[b]:sub(4), 0x80FFFFFF, 0x80808080)
+			gui.pixelText(2, (8 * b) + 26, ButtonNames[b]:sub(4), 0x80FFFFFF, 0x80808080)
 		end
 	end
 

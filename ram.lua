@@ -44,7 +44,7 @@ function levelSetup()
 	
 	local screens = memory.readbyte(SMW.WRAM.screens_number)
 	
-	if isLevelVertical() then
+	if exports.isLevelVertical() then
 		x_size = 32
 		y_size = 16 * screens -- vertical level
 	else

@@ -257,6 +257,7 @@ local playTopButton = forms.button(form, "Play Top", function() playTop(pool) en
 local hideBanner = forms.checkbox(form, "Hide Banner", 5, 190)
 
 event.onexit(function()
+	gui.clearGraphics()
 	forms.destroy(form)
 end)
 
@@ -290,11 +291,6 @@ end)]]
 local levelFitness = 0
 local timeout = TimeoutConstant
 while true do
-	local backgroundColor = 0xD0FFFFFF
-	if not forms.ischecked(hideBanner) then
-		gui.drawBox(0, 0, 300, 26, backgroundColor, backgroundColor)
-	end
-
 	local species = pool.species[pool.currentSpecies]
 	local genome = species.genomes[pool.currentGenome]
 	
@@ -350,7 +346,7 @@ while true do
 		end
 		if not marioAlive then
 			--console.writeline("MarI/O died! Fitness: "..fitness..", penalty: "..500)
-			fitness = fitness - 500
+			fitness = fitness - TimeoutConstant
 		end
 		if fitness <= 0 then
 			fitness = -1
@@ -387,9 +383,11 @@ while true do
                 end
             end
         end
-		gui.drawText(0, 0, "Gen " .. pool.generation .. " species " .. pool.currentSpecies .. " genome " .. pool.currentGenome .. " (" .. math.floor(measured/total*100) .. "%)", 0xFF000000, 11)
-		gui.drawText(0, 12, "Fitness: " .. math.floor(levelFitness - (pool.currentFrame) / 2 - (timeout + timeoutBonus)*2/3), 0xFF000000, 11)
-		gui.drawText(100, 12, "Max Fitness: " .. math.floor(pool.maxFitness), 0xFF000000, 11)
+		local bx = 37
+		local by = 201
+		gui.drawRectangle(bx, by, 181, 19, 0xFF303030, 0xFF000000)
+		gui.pixelText(bx + 2, by + 2, "Gen: "..pool.generation..", Species: "..pool.currentSpecies..", Genome: "..pool.currentGenome.." ("..math.floor(measured/total*100).."%)", 0xFFFFFFFF, 0x00000000)
+		gui.pixelText(bx + 2, by + 11, "Fitness: "..math.floor(levelFitness - (pool.currentFrame) / 2 - (timeout + timeoutBonus)*2/3).." (max: "..math.floor(pool.maxFitness)..")", 0xFFFFFFFF, 0x00000000)
 	end
 		
 	pool.currentFrame = pool.currentFrame + 1
