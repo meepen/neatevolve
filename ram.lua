@@ -25,6 +25,8 @@ local floor = math.floor
 local x_size = 0
 local y_size = 0
 
+local marioStartX = 0
+local marioStartY = 0
 
 function exports.isLevelVertical()
 	local levelsettings = memory.readbyte(SMW.WRAM.level_mode_settings)
@@ -32,7 +34,14 @@ function exports.isLevelVertical()
 end	
 
 
+function exports.getStartPosition()
+	return { x = marioStartX, y = marioStartY }
+end
+
+
 function levelSetup()
+	marioStartX, marioStartY = exports.getPosition()
+	
 	local screens = memory.readbyte(SMW.WRAM.screens_number)
 	
 	if isLevelVertical() then

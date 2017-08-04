@@ -289,6 +289,7 @@ event.onexit(function()
 end)]]
 local levelFitness = 0
 local timeout = TimeoutConstant
+local startPos = { x = 0, y = 0 }
 while true do
 	local backgroundColor = 0xD0FFFFFF
 	if not forms.ischecked(hideBanner) then
@@ -330,17 +331,11 @@ while true do
 		routine.evaluateCurrent(pool)
 			
 		local marioX, marioY = ram.getPosition()
+		local dist = math.sqrt((marioX - startPos.x) ^ 2 + (marioY - startPos.y) ^ 2) 
 		
-		if ram.isLevelVertical() then
-			if marioY > levelFitness then
-				levelFitness = marioY
-				timeout = TimeoutConstant
-			end
-		else
-			if marioX > levelFitness then
-				levelFitness = marioX
-				timeout = TimeoutConstant
-			end
+		if dist > levelFitness then
+			levelFitness = dist
+			timeout = TimeoutConstant
 		end
 		
 		timeout = timeout - 1
@@ -354,8 +349,8 @@ while true do
 			fitness = fitness + 1000
 		end
 		if not marioAlive then
-			console.writeline("MarI/O died! Fitness: "..fitness..", penalty: "..TimeoutConstant)
-			fitness = fitness - TimeoutConstant
+			--console.writeline("MarI/O died! Fitness: "..fitness..", penalty: "..500)
+			fitness = fitness - 500
 		end
 		if fitness <= 0 then
 			fitness = -1
@@ -375,6 +370,7 @@ while true do
 			construct.nextGenome(pool)
 		end
 		routine.initializeRun(pool)
+		startPos = ram.getStartPosition()
 		levelFitness = 0
         timeout = TimeoutConstant
 	end
