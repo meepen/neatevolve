@@ -324,29 +324,30 @@ while true do
 	
 	local drumroll = memory.readbyte(0x13D6)
 	local reachedGoal = (drumroll ~= 0x50) and (drumroll ~= 0)
+	local levelActive = (memory.readbyte(0xDDA) ~= 0xFF) and not reachedGoal
 	
-    if (memory.readbyte(0xDDA) ~= 0xFF) and (not reachedGoal) then
+    if levelActive then
 		routine.evaluateCurrent(pool)
+			
+		local marioX, marioY = ram.getPosition()
+		
+		if ram.isLevelVertical() then
+			if marioY > levelFitness then
+				levelFitness = marioY
+				timeout = TimeoutConstant
+			end
+		else
+			if marioX > levelFitness then
+				levelFitness = marioX
+				timeout = TimeoutConstant
+			end
+		end
+		
+		timeout = timeout - 1
 	end
 
-	local marioX, marioY = ram.getPosition()
-	
-	if ram.isLevelVertical() then
-		if marioY > levelFitness then
-			levelFitness = marioY
-			timeout = TimeoutConstant
-		end
-	else
-		if marioX > levelFitness then
-			levelFitness = marioX
-			timeout = TimeoutConstant
-		end
-	end
-	
-	timeout = timeout - 1
-	
 	local timeoutBonus = pool.currentFrame / 4
-	if timeout + timeoutBonus <= 0 then
+	if timeout + timeoutBonus <= 0 or reachedGoal then
 		local fitness = levelFitness - pool.currentFrame / 2		
 		if reachedGoal then
 			console.writeline("MarI/O reached the goal!")
