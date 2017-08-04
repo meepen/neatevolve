@@ -23,6 +23,14 @@ function exports.evaluateCurrent(pool)
 		controller["P1 Up"] = false
 		controller["P1 Down"] = false
 	end
+	
+	for b=1,#ButtonNames do
+		if (controller[ButtonNames[b]]) then
+			gui.pixelText(2, (8 * b) + 24, ButtonNames[b]:sub(4), 0xFFFFFFFF, 0x8080FF80)
+		else
+			gui.pixelText(2, (8 * b) + 24, ButtonNames[b]:sub(4), 0x80FFFFFF, 0x80808080)
+		end
+	end
 
 	joypad.set(controller)
 end
