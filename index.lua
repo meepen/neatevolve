@@ -289,7 +289,6 @@ event.onexit(function()
 end)]]
 local levelFitness = 0
 local timeout = TimeoutConstant
-local startPos = { x = 0, y = 0 }
 while true do
 	local backgroundColor = 0xD0FFFFFF
 	if not forms.ischecked(hideBanner) then
@@ -331,6 +330,7 @@ while true do
 		routine.evaluateCurrent(pool)
 			
 		local marioX, marioY = ram.getPosition()
+		local startPos = ram.getStartPosition()
 		local dist = math.sqrt((marioX - startPos.x) ^ 2 + (marioY - startPos.y) ^ 2) 
 		
 		if dist > levelFitness then
@@ -370,7 +370,6 @@ while true do
 			construct.nextGenome(pool)
 		end
 		routine.initializeRun(pool)
-		startPos = ram.getStartPosition()
 		levelFitness = 0
         timeout = TimeoutConstant
 	end
