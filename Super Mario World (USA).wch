@@ -1,5 +1,7 @@
 SystemID SNES
 00005D	b	u	0	WRAM	Number of screens in level.
+00005E	b	u	0	WRAM	Horizontal Screens
+00005F	b	u	0	WRAM	Vertical Screens
 000095	b	u	0	WRAM	Screen number
 00007E	w	s	0	WRAM	Player screen X
 000080	w	s	0	WRAM	Player screen Y
