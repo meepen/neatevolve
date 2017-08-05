@@ -32,6 +32,7 @@ local global    = require "globals"
 local construct = require "construct"
 local ram       = require "ram"
 local io        = require "io"
+local SMW		= require "lib/SMW"
 
 local function fitnessAlreadyMeasured(pool)
 	local species = pool.species[pool.currentSpecies]
@@ -298,8 +299,6 @@ while true do
 		displayGenome(genome)
 	end
 	
-	--if pool.currentFrame % 5 == 0 then
-	
 	--[[
 		$7E:13D6
 			Amount of time to wait until the score-incrementing drumroll begins when you beat a level.
@@ -309,20 +308,14 @@ while true do
 			negative value or zero, the drumroll will commence. 
 			Once the drumroll ends, this is set to #$30, and then set to zero upon going to the
 			overworld. It serves the same purpose after you beat a boss as well.
-		$7E:0DDA
-			Back-up of the music register. Gets its value from the level music table at $05:84DB.
-			Bit 7 of this address is set when the player has a star powerup or presses a P-switch;
-			when this is cleared again, the music ends.
-			This address is also set to #$FF when the level ends, either by beating it or by dying.
-			Bit 6 is similar but is used to not reupload all music. This is used when changing from
-			the Mario start screen to the level game mode.
 	]]--
-	
-	local drumroll = memory.readbyte(0x13D6)
+
+	local reachedGoal = false
+	local levelActive = memory.readbyte(SMW.WRAM.game_mode) == SMW.constant.game_mode_level
+	local drumroll = memory.readbyte(SMW.WRAM.score_incrementing)
 	local reachedGoal = (drumroll ~= 0x50) and (drumroll ~= 0)
-	local marioAlive = (memory.readbyte(0xDDA) ~= 0xFF)
-	
-    if marioAlive and not reachedGoal then
+
+    if levelActive and not reachedGoal then
 		routine.evaluateCurrent(pool)
 			
 		local marioX, marioY = ram.getPosition()
@@ -338,15 +331,16 @@ while true do
 	end
 		
 	local timeoutBonus = pool.currentFrame / 4
-	if timeout + timeoutBonus <= 0 or reachedGoal or not marioAlive then
+	if timeout + timeoutBonus <= 0 or reachedGoal or not levelActive then
 		local fitness = levelFitness - pool.currentFrame / 2		
 		if reachedGoal then
 			console.writeline("MarI/O reached the goal! Fitness: "..fitness..", bonus: 1000")
 			fitness = fitness + 1000
-		end
-		if not marioAlive then
-			--console.writeline("MarI/O died! Fitness: "..fitness..", penalty: "..500)
-			fitness = fitness - TimeoutConstant
+		else
+			if not levelActive then
+				--console.writeline("MarI/O died! Fitness: "..fitness..", penalty: "..TimeoutConstant)
+				fitness = fitness - TimeoutConstant
+			end
 		end
 		if fitness <= 0 then
 			fitness = -1
