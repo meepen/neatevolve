@@ -314,8 +314,9 @@ while true do
 	local levelActive = memory.readbyte(SMW.WRAM.game_mode) == SMW.constant.game_mode_level
 	local drumroll = memory.readbyte(SMW.WRAM.score_incrementing)
 	local reachedGoal = (drumroll ~= 0x50) and (drumroll ~= 0)
-
-    if levelActive and not reachedGoal then
+	local levelEnd = memory.readbyte(0x0DDA) == 0xFF
+	
+    if levelActive and not reachedGoal and not levelEnd then
 		routine.evaluateCurrent(pool)
 			
 		local marioX, marioY = ram.getPosition()
@@ -326,21 +327,21 @@ while true do
 			levelFitness = dist
 			timeout = TimeoutConstant
 		end
-		
-		timeout = timeout - 1
 	end
+
+	timeout = timeout - 1
 		
 	local timeoutBonus = pool.currentFrame / 4
 	if timeout + timeoutBonus <= 0 or reachedGoal or not levelActive then
 		local fitness = levelFitness - pool.currentFrame / 2		
 		if reachedGoal then
-			local timerBonus = math.floor(TimeBonusInitialValue * math.pow(1 + (TimeBonusGrowthRate/100), ram.getTimerLeft()))
+			local timerBonus = math.floor(TimeBonusInitialValue * math.pow(1 + (TimeBonusGrowthRate / 100), ram.getTimerLeft()))
 			fitness = fitness + timerBonus
 			--console.writeline("MarI/O reached the goal! Fitness: "..fitness.." (bonus: "..timerBonus..")")
 		else
 			if not levelActive then
-				--console.writeline("MarI/O died! Fitness: "..fitness..", penalty: "..TimeoutConstant)
-				fitness = fitness - TimeoutConstant
+				fitness = fitness - DeathPenaltyValue
+				--console.writeline("MarI/O died! Fitness: "..fitness.." (penalty: "..DeathPenaltyValue..")")
 			end
 		end
 		if fitness <= 0 then
