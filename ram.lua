@@ -24,7 +24,7 @@ local floor = math.floor
 
 local x_size = 0
 local y_size = 0
-
+local timerStart = 0
 local marioStartX = 0
 local marioStartY = 0
 
@@ -39,8 +39,24 @@ function exports.getStartPosition()
 end
 
 
+function exports.getTimerLeft()
+	return readTimer()
+end
+
+
+function exports.getTimerElapsed()
+	return timerStart - readTimer()
+end
+
+
+function readTimer()
+	return (memory.readbyte(SMW.WRAM.timer)*100) + (memory.readbyte(SMW.WRAM.timer+1)*10) + (memory.readbyte(SMW.WRAM.timer+2))
+end
+
+
 function levelSetup()
 	marioStartX, marioStartY = exports.getPosition()
+	timerStart = readTimer()
 	
 	local screens = memory.readbyte(SMW.WRAM.screens_number)
 	

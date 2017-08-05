@@ -36,4 +36,13 @@ EnableMutationChance = 0.2
 
 TimeoutConstant = 90
 
+--[[
+	If MarI/O reaches the goal a time bonus will be calculated
+	based on these values.
+	For each second left on the timer TimeBonusInitialValue will
+	grow with TimeBonusGrowthRate percent.
+]]--
+TimeBonusInitialValue = 10
+TimeBonusGrowthRate = 1.2
+
 MaxNodes = 1000000

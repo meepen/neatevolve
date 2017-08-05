@@ -334,8 +334,9 @@ while true do
 	if timeout + timeoutBonus <= 0 or reachedGoal or not levelActive then
 		local fitness = levelFitness - pool.currentFrame / 2		
 		if reachedGoal then
-			console.writeline("MarI/O reached the goal! Fitness: "..fitness..", bonus: 1000")
-			fitness = fitness + 1000
+			local timerBonus = math.floor(TimeBonusInitialValue * math.pow(1 + (TimeBonusGrowthRate/100), ram.getTimerLeft()))
+			fitness = fitness + timerBonus
+			--console.writeline("MarI/O reached the goal! Fitness: "..fitness.." (bonus: "..timerBonus..")")
 		else
 			if not levelActive then
 				--console.writeline("MarI/O died! Fitness: "..fitness..", penalty: "..TimeoutConstant)
