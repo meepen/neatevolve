@@ -243,11 +243,12 @@ routine.initializePool(pool)
 io.writeFile("temp.pool", pool)
 
 
-local form = forms.newform(176, 270, "Fitness")
+local form = forms.newform(220, 264, "Fitness")
 maxFitnessLabel = forms.label(form, "Max Fitness: " .. math.floor(pool.maxFitness), 5, 8)
 local showNetwork = forms.checkbox(form, "Show Map", 6, 30)
 local showOnScreenDisplay = forms.checkbox(form, "Show OSD", 6, 52)
-local showMutationRates = forms.checkbox(form, "Show M-Rates", 6, 74)
+local showButtonPresses = forms.checkbox(form, "Show Buttons", 6, 74)
+local showMutationRates = false -- forms.checkbox(form, "Show M-Rates", 6, 96) --NOT IMPLEMENTED
 saveLoadFile = forms.textbox(form, Filename .. ".pool", 149, 25, nil, 6, 142)
 local saveLoadLabel = forms.label(form, "Save/Load:", 5, 128)
 local saveButton = forms.button(form, "Save", function() savePool(pool) end, 5, 166)
@@ -344,6 +345,10 @@ while true do
 		displayGenome(genome)
 	end
 
+	if forms.ischecked(showButtonPresses) then
+		osd.displayInputs(routine.getButtons())
+	end
+	
 	if forms.ischecked(showOnScreenDisplay) then
     	local measured = 0
     	local total = 0
@@ -357,7 +362,6 @@ while true do
                 end
             end
         end
-		osd.displayInputs(routine.getButtons())
 		osd.displayBanner(
 			"Gen: "..pool.generation..", Species: "..pool.currentSpecies..", Genome: "..pool.currentGenome.." ("..math.floor(measured/total*100).."%)",
 			"Fitness: "..math.floor(levelFitness - (pool.currentFrame) / 2 - (timeout + timeoutBonus)*2/3).." (max: "..math.floor(pool.maxFitness)..")"
