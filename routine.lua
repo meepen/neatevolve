@@ -3,11 +3,18 @@ local exports = {}
 package.loaded.routine = exports
 
 local basicGenome, performTileSetup, newNetwork, newSpecies, getScreen
+local controllerButtons = {}
 
 local exp = math.exp
 local function sigmoid(x)
 	return 2/(1+exp(-4.9*x))-1
 end
+
+
+function exports.getButtons()
+	return controllerButtons
+end
+
 
 function exports.evaluateCurrent(pool)
 	local genome = pool.species[pool.currentSpecies].genomes[pool.currentGenome]
@@ -24,6 +31,8 @@ function exports.evaluateCurrent(pool)
 		controller["P1 Down"] = false
 	end
 
+	controllerButtons = controller
+
 	joypad.set(controller)
 end
 
@@ -37,7 +46,7 @@ function exports.initializePool(pool)
 end
 
 function exports.initializeRun(pool)
-	savestate.load(Filename);
+	savestate.loadslot(1);
     performTileSetup();
 	-- rightmost = 0
 	pool.currentFrame = 0
@@ -148,6 +157,7 @@ function exports.getInputs()
                 local w = min(inx + 15, iy_mult - 1) - fx
                 local h = fy_max - fy_min
                 indextbl = indextbl or PrecompiledTableAssignment
+				
                 if (h >= 0 and w >= 0) then
                     indextbl[h * 16 + w](inputs, fx + 1, fy_min)
                 end
@@ -167,7 +177,7 @@ function exports.getInputs()
         
         local ix = dx + BoxRadius * 16
         local iy = dy + BoxRadius * 16
-        
+
         local ix2 = dx2 + BoxRadius * 16
         local iy2 = dy2 + BoxRadius * 16
         
@@ -182,6 +192,7 @@ function exports.getInputs()
             extended[i].x - marioX,
             extended[i].y - marioY
         
+        local ix, iy
         local ix = dx + BoxRadius * 16
         local iy = dy + BoxRadius * 16
         

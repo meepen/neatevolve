@@ -1,0 +1,14 @@
+SystemID SNES
+00005D	b	u	0	WRAM	Number of screens in level.
+00005E	b	u	0	WRAM	Horizontal Screens
+00005F	b	u	0	WRAM	Vertical Screens
+000095	b	u	0	WRAM	Screen number
+00007E	w	s	0	WRAM	Player screen X
+000080	w	s	0	WRAM	Player screen Y
+000094	w	s	0	WRAM	Player X
+000096	w	s	0	WRAM	Player Y
+000055	b	u	0	WRAM	Direction of scrolling for Layer 1.
+000056	b	u	0	WRAM	Direction of scrolling for Layer 2.
+0013D6	b	u	0	WRAM	Amount of time to wait until the score-incrementing drumroll begins when you beat a level. Any time you enter a level, this address is set to #$50. Once you beat the level and the number of bonus stars you won and the score is displayed (or just the score 
+000DDA	b	u	0	WRAM	This address is set to #$FF when the level ends.
+

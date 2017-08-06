@@ -1,32 +1,13 @@
 local exports = {}
-
 package.loaded.ram = exports
+
+local SMW = require "lib/SMW"
+local SPRITES = require "sprites"
 
 memory.usememorydomain("WRAM")
 
 local function SNESToPC(addr)
     return bit.band(addr, 0xFFFF)+(32768*(bit.band(bit.rshift(addr, 16), 127)))-32256-512;
-end
-
-
-
-local clipping = {
-    xdisp = memory.readbyterange(SNESToPC(0x03B56C), 60, "CARTROM"),
-    width = memory.readbyterange(SNESToPC(0x03B5A8), 60, "CARTROM"),
-    ydisp = memory.readbyterange(SNESToPC(0x03B5E4), 60, "CARTROM"),
-    height = memory.readbyterange(SNESToPC(0x03B620), 60, "CARTROM"),
-}
-for i = 0, 59 do
-    local tmp = clipping.xdisp[i]
-    if (tmp > 0x7f) then
-        tmp = tmp - 0x100
-    end
-    clipping.xdisp[i] = tmp
-    tmp = clipping.ydisp[i]
-    if (tmp > 0x7f) then
-        tmp = tmp - 0x100
-    end
-    clipping.ydisp[i] = tmp
 end
 local playerClipping = {
     height = memory.readbyterange(0x1b660, 4, "CARTROM"),
@@ -36,26 +17,75 @@ local playerClipping = {
 }
 
 require "globals"
-
 local performTileSetup, getTile
 local ramlow,ramhigh
 local tilecache, slope
 local floor = math.floor
-local y_size = 256
-local x_size = 256
+
+local x_size = 0
+local y_size = 0
+local timerStart = 0
+local marioStartX = 0
+local marioStartY = 0
+
+function exports.isLevelVertical()
+	local levelsettings = memory.readbyte(SMW.WRAM.level_mode_settings)
+	return (levelsettings ~= 0) and (levelsettings == 0x3 or levelsettings == 0x4 or levelsettings == 0x7 or levelsettings == 0x8 or levelsettings == 0xa or levelsettings == 0xd)
+end	
+
+
+function exports.getStartPosition()
+	return { x = marioStartX, y = marioStartY }
+end
+
+
+function exports.getTimerLeft()
+	return readTimer()
+end
+
+
+function exports.getTimerElapsed()
+	return timerStart - readTimer()
+end
+
+
+function readTimer()
+	return (memory.readbyte(SMW.WRAM.timer)*100) + (memory.readbyte(SMW.WRAM.timer+1)*10) + (memory.readbyte(SMW.WRAM.timer+2))
+end
+
+
+function levelSetup()
+	marioStartX, marioStartY = exports.getPosition()
+	timerStart = readTimer()
+	
+	local screens = memory.readbyte(SMW.WRAM.screens_number)
+	
+	if exports.isLevelVertical() then
+		x_size = 32
+		y_size = 16 * screens -- vertical level
+	else
+		x_size = 16 * screens -- horizontal level
+		y_size = 32
+	end
+end
+
+
 local iy_mult = ((BoxRadius * 2) * 16)
 local precompiled_end = "\nend"
-
 local precompiled = "return function(inputs, inx, iny) inx = inx + iny * "..iy_mult.."\n"
 local inputSetters = {}
+
+
 local function buildFormatArgs(count, num, offset)
     local r = {}
     offset = offset or 0
     for i = 1, count do
         r[i] = num + i + offset - 1
     end
-    return unpack(r)
+    return unpack(r) 
 end
+
+
 local function buidValueFormatArgs(count, y, range, offset)
     local r = {}
     offset = offset or 0
@@ -64,13 +94,17 @@ local function buidValueFormatArgs(count, y, range, offset)
     end
     return unpack(r)
 end
+
+
 function exports.performTileSetup()
-    --tilecache = {}
+	levelSetup()	
+	
+	--tilecache = {}
     if (not tilecache) then
         ramhigh = memory.readbyterange(0x1C800, 0x37FF)
         ramlow = memory.readbyterange(0xC800, 0x37FF)
         tilecache = {}
-        local slope_ptr = SNESToPC(memory.read_u24_le(0x0082))
+		local slope_ptr = SNESToPC(memory.read_u24_le(0x0082))
         
         slopes = memory.readbyterange(slope_ptr, 0x1D7-0x16A, "CARTROM")
         
@@ -157,12 +191,12 @@ function exports.performTileSetup()
                     tilecache[dx * y_size + dy][3] = inputSetters[lo-base]
                     
                 end
-                
             end
         end
     end
     
 end
+
 
 function exports.getTile(dx, dy)
     dx = (dx - dx % 16) / 16
@@ -174,34 +208,41 @@ function exports.getTile(dx, dy)
     return tile[1], tile[2], tile[3]
 end
 
-local allowStatus = {
-    false,
-    false,
-    true,
-    false,
-    false,
-    false,
-    false,
-    true
-}
 
 function exports.getSprites()
     
 	local sprites = {}
-	for slot=0,11 do
+	for slot=0,SMW.constant.sprite_max -1 do
         
-		local status = memory.readbyte(0x14C8+slot)
-		if allowStatus[status] then
-			local spritex = memory.readbyte(0xE4+slot) + memory.readbyte(0x14E0+slot)*256
-			local spritey = memory.readbyte(0xD8+slot) + memory.readbyte(0x14D4+slot)*256
-            local clip = bit.band(memory.readbyte(0x1662+slot), 0x3f)
-            
-			sprites[#sprites+1] = {
-                x = spritex + clipping.xdisp[clip],
-                x2 = spritex + clipping.xdisp[clip] + clipping.width[clip],
-                y = spritey + clipping.ydisp[clip],
-                y2 = spritey + clipping.ydisp[clip] + clipping.height[clip],
-            }
+		local status = memory.readbyte(SMW.WRAM.sprite_status+slot)
+		-- States 08 and above are considered alive; sprites in other states are dead and should not be interacted with.
+		if status >= 8 then
+			local sprite_number = memory.readbyte(SMW.WRAM.sprite_number + slot)
+			local sprite_extra_info = SPRITES[sprite_number]
+			
+			-- Ignore unnecessary stuff (tweak this in enemies.lua)
+			
+			-- FIXME: Doesn't work for large enemies (ex. Banzai Bill)
+			--        Do we need to read SMW.WRAM.sprite_memory_header to fix this?
+			
+			-- FIXME: Why are empty shells marked as deadly? This never gets executed.
+			-- if sprite_number == 0xDB then
+			--    console.writeline("Red shell")
+			-- end
+			
+			if sprite_extra_info.deadly then
+				local spritex = memory.readbyte(SMW.WRAM.sprite_x_low+slot) + memory.readbyte(SMW.WRAM.sprite_x_high+slot)*256
+				local spritey = memory.readbyte(SMW.WRAM.sprite_y_low+slot) + memory.readbyte(SMW.WRAM.sprite_y_high+slot)*256
+				local boxid = bit.band(memory.readbyte(SMW.WRAM.sprite_2_tweaker+slot), 0x3f)
+				local clip = SMW.HITBOX_SPRITE[boxid]
+				
+				sprites[#sprites+1] = {
+					x = spritex + clip.xoff,
+					x2 = spritex + clip.xoff + clip.width,
+					y = spritey + clip.yoff,
+					y2 = spritey + clip.yoff + clip.width
+				}
+			end
 		end
         
 	end		
@@ -210,15 +251,14 @@ function exports.getSprites()
 end
 
 
-
 function exports.getPlayerHitbox(marioX, marioY)
-    local crouching = memory.readbyte(0x73)
-    local powerup = memory.readbyte(0x19)
+    local crouching = memory.readbyte(SMW.WRAM.is_ducking)
+    local powerup = memory.readbyte(SMW.WRAM.powerup)
     local index = 0
     if (crouching ~= 0 or powerup == 0) then
         index = index + 1
     end
-    local yoshistate = memory.readbyte(0x187A)
+    local yoshistate = memory.readbyte(SMW.WRAM.yoshi_riding_flag)
     if (yoshistate ~= 0) then
         index = index + 2
     end
@@ -251,7 +291,7 @@ end
 
 
 function exports.getPosition()
-	return memory.read_s16_le(0xD1), memory.read_s16_le(0xD3)
+	return memory.read_s16_le(SMW.WRAM.x), memory.read_s16_le(SMW.WRAM.y)
 end
 
 function exports.getScreen()
