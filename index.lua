@@ -33,6 +33,7 @@ local construct = require "construct"
 local ram       = require "ram"
 local io        = require "io"
 local SMW		= require "lib/SMW"
+local osd		= require "osd"
 
 local function fitnessAlreadyMeasured(pool)
 	local species = pool.species[pool.currentSpecies]
@@ -242,20 +243,21 @@ routine.initializePool(pool)
 io.writeFile("temp.pool", pool)
 
 
-local form = forms.newform(200, 260, "Fitness")
+local form = forms.newform(176, 270, "Fitness")
 maxFitnessLabel = forms.label(form, "Max Fitness: " .. math.floor(pool.maxFitness), 5, 8)
-local showNetwork = forms.checkbox(form, "Show Map", 5, 30)
-local showMutationRates = forms.checkbox(form, "Show M-Rates", 5, 52)
+local showNetwork = forms.checkbox(form, "Show Map", 6, 30)
+local showOnScreenDisplay = forms.checkbox(form, "Show OSD", 6, 52)
+local showMutationRates = forms.checkbox(form, "Show M-Rates", 6, 74)
+saveLoadFile = forms.textbox(form, Filename .. ".pool", 149, 25, nil, 6, 142)
+local saveLoadLabel = forms.label(form, "Save/Load:", 5, 128)
+local saveButton = forms.button(form, "Save", function() savePool(pool) end, 5, 166)
+local loadButton = forms.button(form, "Load", function() pool = loadPool() end, 80, 166)
+local playTopButton = forms.button(form, "Play Top", function() playTop(pool) end, 5, 192)
 local restartButton = forms.button(form, "Restart", function()
     pool = new.newPool()
     routine.initializePool(pool)
-end, 5, 77)
-local saveButton = forms.button(form, "Save", function() savePool(pool) end, 5, 102)
-local loadButton = forms.button(form, "Load", function() pool = loadPool() end, 80, 102)
-saveLoadFile = forms.textbox(form, Filename .. ".pool", 170, 25, nil, 5, 148)
-local saveLoadLabel = forms.label(form, "Save/Load:", 5, 129)
-local playTopButton = forms.button(form, "Play Top", function() playTop(pool) end, 5, 170)
-local hideBanner = forms.checkbox(form, "Hide Banner", 5, 190)
+end, 80, 192)
+
 
 event.onexit(function()
 	gui.clearGraphics()
@@ -291,30 +293,20 @@ event.onexit(function()
 end)]]
 local levelFitness = 0
 local timeout = TimeoutConstant
+
 while true do
 	local species = pool.species[pool.currentSpecies]
 	local genome = species.genomes[pool.currentGenome]
-	
-	if forms.ischecked(showNetwork) then
-		displayGenome(genome)
-	end
-	
-	--[[
-		$7E:13D6
-			Amount of time to wait until the score-incrementing drumroll begins when you beat a level.
-			Any time you enter a level, this address is set to #$50. Once you beat the level and the
-			number of bonus stars you won and the score is displayed (or just the score if you didn't
-			cut the goal tape), this timer will decrement itself once per frame. Once it reaches a
-			negative value or zero, the drumroll will commence. 
-			Once the drumroll ends, this is set to #$30, and then set to zero upon going to the
-			overworld. It serves the same purpose after you beat a boss as well.
-	]]--
 
-	local reachedGoal = false
 	local levelActive = memory.readbyte(SMW.WRAM.game_mode) == SMW.constant.game_mode_level
 	local drumroll = memory.readbyte(SMW.WRAM.score_incrementing)
 	local reachedGoal = (drumroll ~= 0x50) and (drumroll ~= 0)
 	local levelEnd = memory.readbyte(0x0DDA) == 0xFF
+	local timeoutBonus = pool.currentFrame / 4
+	local shouldReset = timeout + timeoutBonus <= 0 or reachedGoal or not levelActive
+	local fitness = levelFitness - pool.currentFrame / 2	
+	timeout = timeout - 1
+
 	
     if levelActive and not reachedGoal and not levelEnd then
 		routine.evaluateCurrent(pool)
@@ -329,11 +321,9 @@ while true do
 		end
 	end
 
-	timeout = timeout - 1
-		
-	local timeoutBonus = pool.currentFrame / 4
-	if timeout + timeoutBonus <= 0 or reachedGoal or not levelActive then
-		local fitness = levelFitness - pool.currentFrame / 2		
+	
+	if shouldReset then
+		-- Update final fitness values before they are displayed on screen (one frame shouldn't matter, but it annoyed me :D)
 		if reachedGoal then
 			local timerBonus = math.floor(TimeBonusInitialValue * math.pow(1 + (TimeBonusGrowthRate / 100), ram.getTimerLeft()))
 			fitness = fitness + timerBonus
@@ -347,26 +337,14 @@ while true do
 		if fitness <= 0 then
 			fitness = -1
 		end
-		genome.fitness = fitness
-		
-		if fitness > pool.maxFitness then
-			pool.maxFitness = fitness
-			forms.settext(maxFitnessLabel, "Max Fitness: " .. math.floor(pool.maxFitness))
-			io.writeFile("backup." .. pool.generation .. "." .. forms.gettext(saveLoadFile), pool)
-		end
-		
-		--console.writeline("Gen " .. pool.generation .. " species " .. pool.currentSpecies .. " genome " .. pool.currentGenome .. " fitness: " .. fitness)
-		pool.currentSpecies = 1
-		pool.currentGenome = 1
-		while fitnessAlreadyMeasured(pool) do
-			construct.nextGenome(pool)
-		end
-		routine.initializeRun(pool)
-		levelFitness = 0
-        timeout = TimeoutConstant
+	end
+	
+	
+	if forms.ischecked(showNetwork) then
+		displayGenome(genome)
 	end
 
-	if not forms.ischecked(hideBanner) then
+	if forms.ischecked(showOnScreenDisplay) then
     	local measured = 0
     	local total = 0
         local species = pool.species
@@ -379,15 +357,35 @@ while true do
                 end
             end
         end
-		local bx = 37
-		local by = 201
-		gui.drawRectangle(bx, by, 181, 19, 0xFF303030, 0xFF000000)
-		gui.pixelText(bx + 2, by + 2, "Gen: "..pool.generation..", Species: "..pool.currentSpecies..", Genome: "..pool.currentGenome.." ("..math.floor(measured/total*100).."%)", 0xFFFFFFFF, 0x00000000)
-		gui.pixelText(bx + 2, by + 11, "Fitness: "..math.floor(levelFitness - (pool.currentFrame) / 2 - (timeout + timeoutBonus)*2/3).." (max: "..math.floor(pool.maxFitness)..")", 0xFFFFFFFF, 0x00000000)
+		osd.displayInputs(routine.getButtons())
+		osd.displayBanner(
+			"Gen: "..pool.generation..", Species: "..pool.currentSpecies..", Genome: "..pool.currentGenome.." ("..math.floor(measured/total*100).."%)",
+			"Fitness: "..math.floor(levelFitness - (pool.currentFrame) / 2 - (timeout + timeoutBonus)*2/3).." (max: "..math.floor(pool.maxFitness)..")"
+		)
 	end
+	
+	
+	if shouldReset then
+		genome.fitness = fitness
 		
-	pool.currentFrame = pool.currentFrame + 1
-
+		if fitness > pool.maxFitness then
+			pool.maxFitness = fitness
+			forms.settext(maxFitnessLabel, "Max Fitness: " .. math.floor(pool.maxFitness))
+			io.writeFile("backup." .. pool.generation .. "." .. forms.gettext(saveLoadFile), pool)
+		end
+		
+		pool.currentSpecies = 1
+		pool.currentGenome = 1
+		while fitnessAlreadyMeasured(pool) do
+			construct.nextGenome(pool)
+		end
+		routine.initializeRun(pool)
+		levelFitness = 0
+        timeout = TimeoutConstant
+	else
+		pool.currentFrame = pool.currentFrame + 1
+	end
+	
 	emu.frameadvance();
     coroutine.yield()
     

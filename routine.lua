@@ -3,11 +3,18 @@ local exports = {}
 package.loaded.routine = exports
 
 local basicGenome, performTileSetup, newNetwork, newSpecies, getScreen
+local controllerButtons = {}
 
 local exp = math.exp
 local function sigmoid(x)
 	return 2/(1+exp(-4.9*x))-1
 end
+
+
+function exports.getButtons()
+	return controllerButtons
+end
+
 
 function exports.evaluateCurrent(pool)
 	local genome = pool.species[pool.currentSpecies].genomes[pool.currentGenome]
@@ -23,14 +30,8 @@ function exports.evaluateCurrent(pool)
 		controller["P1 Up"] = false
 		controller["P1 Down"] = false
 	end
-	
-	for b=1,#ButtonNames do
-		if (controller[ButtonNames[b]]) then
-			gui.pixelText(2, (8 * b) + 26, ButtonNames[b]:sub(4), 0xFFFFFFFF, 0x8080FF80)
-		else
-			gui.pixelText(2, (8 * b) + 26, ButtonNames[b]:sub(4), 0x80FFFFFF, 0x80808080)
-		end
-	end
+
+	controllerButtons = controller
 
 	joypad.set(controller)
 end
